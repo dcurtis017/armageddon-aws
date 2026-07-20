@@ -1,11 +1,3 @@
-locals {
-  python_lambda_function_name   = "lamba_lab_python"
-  node_lambda_function_name     = "lambda_lab_node"
-  waf_analyzer_lambda           = "lambda_lab_waf_analyzer"
-  waf_threat_correlation_lambda = "lambda_lab_waf_threat_correlation"
-  llm_model_id                  = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-}
-
 # assume role policy for lambda role -- allows lambda to assume your role
 data "aws_iam_policy_document" "assume_role_doc" {
   statement {
@@ -209,7 +201,12 @@ resource "aws_iam_policy" "waf_threat_correlation_policy" {
       {
         Action   = ["logs:FilterLogEvents"]
         Effect   = "Allow"
-        Resource = "*" # restrict later to just the waf logs for the app
+        Resource = "*" # I don't think this one is needed
+      },
+      {
+        Action   = ["events:PutEvents"]
+        Effect   = "Allow"
+        Resource = "arn:aws:events:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:event-bus/${var.waf_correlation_bus_name}"
       }
     ]
   })
@@ -227,7 +224,7 @@ resource "aws_iam_role_policy_attachment" "waf_threat_correlation_lambda_basic" 
 
 resource "aws_iam_role_policy_attachment" "waf_threat_correlation_policy" {
   role       = aws_iam_role.waf_threat_correlation_lambda_execution_role.name
-  policy_arn = aws_iam_policy.waf_events_policy.arn
+  policy_arn = aws_iam_policy.waf_threat_correlation_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "waf_correlation_findings" {
@@ -270,6 +267,8 @@ resource "aws_lambda_function" "waf_threat_correlation_lambda" {
       CORRELATION_WINDOW_MINUTES = 60
       MINIMUM_EVENT_COUNT        = 3
       MAX_EVENTS                 = 100
+      EVENTBRIDGE_BUS_NAME       = var.waf_correlation_bus_name
+      EVENTBRIDGE_SOURCE         = var.waf_correlation_event_source
     }
   }
   depends_on       = [aws_cloudwatch_log_group.waf_threat_correlation_lambda_logs]

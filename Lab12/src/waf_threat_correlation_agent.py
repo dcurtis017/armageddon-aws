@@ -54,6 +54,16 @@ ADMIN_URI_KEYWORDS = [
     if keyword.strip()
 ]
 
+EVENTBRIDGE_SOURCE = os.environ.get(
+    "EVENTBRIDGE_SOURCE",
+    "seir.waf.correlation",
+)
+
+EVENTBRIDGE_BUS_NAME = os.environ.get(
+    "EVENTBRIDGE_BUS_NAME",
+    "default",
+)
+
 waf_events_table = dynamodb.Table(WAF_EVENTS_TABLE)
 findings_table = dynamodb.Table(CORRELATION_FINDINGS_TABLE)
 
@@ -725,7 +735,32 @@ def save_finding(
 
     return finding_id
 
+def publish_finding_to_eventbridge(finding_id: str, severity: str) -> bool:
+    """Publish the finding to EventBridge."""
+    eventbridge_client = boto3.client("events")
 
+    event_detail = {
+        "finding_id": finding_id,
+        "severity": severity,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+    try:
+        response = eventbridge_client.put_events(
+            Entries=[
+                {
+                    "Source": EVENTBRIDGE_SOURCE,
+                    "DetailType": "WAF Threat Finding Created",
+                    "Detail": json.dumps(event_detail),
+                    "EventBusName": EVENTBRIDGE_BUS_NAME
+                }
+            ]
+        )
+        print(f"Published finding {finding_id} to EventBridge bus {EVENTBRIDGE_BUS_NAME} with response: {response}")
+        return True
+    except (ClientError, BotoCoreError) as error:
+        print(f"Failed to publish finding {finding_id} to EventBridge bus {EVENTBRIDGE_BUS_NAME} : {error}")
+        return False
 # ============================================================
 # Lambda handler
 # ============================================================
@@ -807,6 +842,8 @@ def lambda_handler(
         risk_score, severity, primary_source_ip = (
             determine_overall_risk(evidence_package)
         )
+        
+        published_to_eventbridge = publish_finding_to_eventbridge(finding_id, severity)
 
         result = {
             "message": (
@@ -818,6 +855,7 @@ def lambda_handler(
             "severity": severity,
             "risk_score": risk_score,
             "primary_source_ip": primary_source_ip,
+            "published_to_eventbridge": published_to_eventbridge
         }
 
         print("Correlation result:")

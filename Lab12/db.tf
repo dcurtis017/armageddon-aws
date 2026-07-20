@@ -95,8 +95,88 @@ resource "aws_iam_policy" "waf_correlation_findings_table" {
   })
 }
 
+resource "aws_iam_policy" "waf_correlation_findings_table_ro" {
+  name = "waf-correlation-findings-table-ro-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ]
+        Effect   = "Allow"
+        Resource = [aws_dynamodb_table.waf_correlation_findings_table.arn, "${aws_dynamodb_table.waf_correlation_findings_table.arn}/index/*"]
+      }
+    ]
+  })
+}
+
 resource "aws_ssm_parameter" "waf_correlation_findings_table" {
   name  = "/${var.cognito_app_name}/waf_correlation_findings_table"
   type  = "String"
   value = aws_dynamodb_table.waf_correlation_findings_table.name
+}
+
+
+#########################################
+#   SECURITY INCIDENTS TABLE.           #
+#########################################
+resource "aws_dynamodb_table" "security_incidents_table" {
+  name         = var.security_incidents_table_name
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "incident_id"
+  attribute {
+    name = "incident_id"
+    type = "S"
+  }
+}
+
+resource "aws_iam_policy" "security_incidents_table" {
+  name = "security-incidents-table-rw-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          //"dynamodb:DeleteItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ]
+        Effect   = "Allow"
+        Resource = [aws_dynamodb_table.security_incidents_table.arn, "${aws_dynamodb_table.security_incidents_table.arn}/index/*"]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "security_incidents_table_ro" {
+  name = "security-incidents-table-ro-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ]
+        Effect   = "Allow"
+        Resource = [aws_dynamodb_table.security_incidents_table.arn, "${aws_dynamodb_table.security_incidents_table.arn}/index/*"]
+      }
+    ]
+  })
+}
+
+resource "aws_ssm_parameter" "security_incidents_table" {
+  name  = "/${var.cognito_app_name}/security_incidents_table"
+  type  = "String"
+  value = aws_dynamodb_table.security_incidents_table.name
 }

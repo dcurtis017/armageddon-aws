@@ -60,3 +60,32 @@ variable "test_user_2_username" {
 variable "test_user_3_username" {
   type = string
 }
+
+variable "waf_correlation_bus_name" {
+  type    = string
+  default = "default"
+}
+
+variable "waf_correlation_event_source" {
+  type    = string
+  default = "seir.waf.correlation"
+}
+
+variable "soar_sns_topic_name" {
+  type    = string
+  default = "soar-response-topic"
+}
+
+variable "soar_sns_email_endpoint" {
+  type = string
+}
+
+variable "security_incidents_table_name" {
+  type    = string
+  default = "security-incidents"
+}
+
+variable "enable_bedrock_for_soar_response_agent" {
+  type    = bool
+  default = true
+}

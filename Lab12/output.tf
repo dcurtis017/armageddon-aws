@@ -50,3 +50,7 @@ output "waf_analyzer_lambda_arn" {
 output "waf_threat_correlation_lambda_arn" {
   value = aws_lambda_function.waf_threat_correlation_lambda.arn
 }
+
+output "soar_response_agent_lambda_arn" {
+  value = aws_lambda_function.soar_response_agent_lambda.arn
+}
