@@ -95,25 +95,6 @@ resource "aws_iam_policy" "waf_correlation_findings_table" {
   })
 }
 
-resource "aws_iam_policy" "waf_correlation_findings_table_ro" {
-  name = "waf-correlation-findings-table-ro-policy"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:Scan",
-          "dynamodb:Query"
-        ]
-        Effect   = "Allow"
-        Resource = [aws_dynamodb_table.waf_correlation_findings_table.arn, "${aws_dynamodb_table.waf_correlation_findings_table.arn}/index/*"]
-      }
-    ]
-  })
-}
-
 resource "aws_ssm_parameter" "waf_correlation_findings_table" {
   name  = "/${var.cognito_app_name}/waf_correlation_findings_table"
   type  = "String"
@@ -146,25 +127,6 @@ resource "aws_iam_policy" "security_incidents_table" {
           "dynamodb:GetItem",
           "dynamodb:UpdateItem",
           //"dynamodb:DeleteItem",
-          "dynamodb:Scan",
-          "dynamodb:Query"
-        ]
-        Effect   = "Allow"
-        Resource = [aws_dynamodb_table.security_incidents_table.arn, "${aws_dynamodb_table.security_incidents_table.arn}/index/*"]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy" "security_incidents_table_ro" {
-  name = "security-incidents-table-ro-policy"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "dynamodb:GetItem",
           "dynamodb:Scan",
           "dynamodb:Query"
         ]
