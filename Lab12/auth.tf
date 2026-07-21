@@ -8,6 +8,11 @@ terraform {
       source  = "hashicorp/random"
       version = "3.5.1"
     }
+
+    null = {
+      source  = "hashicorp/null"
+      version = "3.3.0"
+    }
   }
   backend "s3" {
     bucket  = "bmc-daneboy-tf-state"

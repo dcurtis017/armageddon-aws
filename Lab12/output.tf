@@ -54,3 +54,11 @@ output "waf_threat_correlation_lambda_arn" {
 output "soar_response_agent_lambda_arn" {
   value = aws_lambda_function.soar_response_agent_lambda.arn
 }
+
+output "executive_dashboard_agent_lambda_arn" {
+  value = aws_lambda_function.executive_dashboard_agent_lambda.arn
+}
+
+output "executive_dashboard_bucket_name" {
+  value = aws_s3_bucket.executive_dashboard_bucket.id
+}

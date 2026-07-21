@@ -89,3 +89,13 @@ variable "enable_bedrock_for_soar_response_agent" {
   type    = bool
   default = true
 }
+
+variable "executive_dashboard_bucket_name" {
+  type    = string
+  default = "bmc-class7-executive-dashboard"
+}
+
+variable "default_bedrock_model_id" {
+  type    = string
+  default = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+}
