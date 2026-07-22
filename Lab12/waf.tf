@@ -174,7 +174,3 @@ data "aws_iam_policy_document" "waf_log_policy_doc" {
     }
   }
 }
-
-data "aws_region" "current" {}
-
-data "aws_caller_identity" "current" {}

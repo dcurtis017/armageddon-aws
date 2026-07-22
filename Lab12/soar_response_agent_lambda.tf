@@ -6,14 +6,6 @@ resource "aws_iam_policy" "soar_response_agent_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action = [
-          "bedrock:InvokeModel",
-          "aws-marketplace:*"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
         Action   = ["sns:Publish"]
         Effect   = "Allow"
         Resource = aws_sns_topic.soar_response_topic.arn
@@ -29,6 +21,11 @@ resource "aws_iam_role" "soar_response_agent_lambda_execution_role" {
 resource "aws_iam_role_policy_attachment" "soar_response_agent_lambda_basic" {
   role       = aws_iam_role.soar_response_agent_lambda_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "soar_response_agent_bedrock_invoke" {
+  role       = aws_iam_role.soar_response_agent_lambda_execution_role.name
+  policy_arn = aws_iam_policy.bedrock_invoke.arn
 }
 
 resource "aws_iam_role_policy_attachment" "soar_response_agent_policy" {

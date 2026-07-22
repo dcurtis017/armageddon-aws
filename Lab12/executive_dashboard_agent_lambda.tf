@@ -12,14 +12,6 @@ resource "aws_iam_policy" "executive_dashboard_agent_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action = [
-          "bedrock:InvokeModel",
-          "aws-marketplace:*"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
         Action   = ["s3:PutObject"]
         Effect   = "Allow"
         Resource = "${aws_s3_bucket.executive_dashboard_bucket.arn}/*"
@@ -45,6 +37,11 @@ resource "aws_iam_role" "executive_dashboard_agent_lambda_execution_role" {
 resource "aws_iam_role_policy_attachment" "executive_dashboard_agent_lambda_basic" {
   role       = aws_iam_role.executive_dashboard_agent_lambda_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "executive_dashboard_agent_bedrock_invoke" {
+  role       = aws_iam_role.executive_dashboard_agent_lambda_execution_role.name
+  policy_arn = aws_iam_policy.bedrock_invoke.arn
 }
 
 resource "aws_iam_role_policy_attachment" "executive_dashboard_agent_policy" {

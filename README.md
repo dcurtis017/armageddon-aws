@@ -34,6 +34,8 @@ Tools -> Options -> Replacer -> Add
 
 # Testing
 
+https://waf.secmy.app/
+
 1. Make some bad requests
 1. Manually trigger WAF Analyzer
 1. Manually trigger Threat Correlation Agent (this will publish to event bridge which will trigger the soar response agent)
@@ -49,3 +51,8 @@ https://docs.aws.amazon.com/lambda/latest/dg/python-package.html
   - cp is cpython (the standard)
   - binary only means pip won't compile pagages from source (should make for faster installs)
   - `python3 -m pip install --platform manylinux2014_x86_64 --implementation cp --python-version 3.13 --only-binary=:all: --upgrade -r ${path.module}/src/requirements.txt -t ${path.module}/src/layer/python`
+
+# Bedrock
+
+- the instance profile does routing, you need to make sure the lambdas can invoke the instance profile model as well as the foundation model that it routes to
+- TODO: BETTER EXPLAIN WHY USING us. and an inference profile is best
