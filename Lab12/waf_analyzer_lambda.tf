@@ -49,10 +49,29 @@ resource "aws_lambda_function" "waf_analyzer_lambda" {
       BEDROCK_MODEL_ID = local.llm_model_id
       DYNAMODB_TABLE   = aws_dynamodb_table.waf_events_table.name
       WAF_LOG_GROUP    = aws_cloudwatch_log_group.waf_log_group.name
-      LOOKBACK_MINUTES = 5
-      MAX_LOG_EVENTS   = 10
+      LOOKBACK_MINUTES = 10
+      MAX_LOG_EVENTS   = 25
     }
   }
   depends_on       = [aws_cloudwatch_log_group.waf_analyzer_lambda_logs]
   source_code_hash = data.archive_file.waf_analyzer_lambda_zip.output_base64sha256
+}
+
+# scheduler rule
+# schedule -- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/scheduler_schedule
+resource "aws_scheduler_schedule" "waf_analyzer_schedule" {
+  name       = "waf-analyzer-lambda-schedule"
+  group_name = "default"
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = "rate(10 minute)"
+
+  target {
+    arn      = aws_lambda_function.waf_analyzer_lambda.arn
+    role_arn = aws_iam_role.eventbridge_scheduler_role.arn
+
+    # no custom payload
+  }
 }

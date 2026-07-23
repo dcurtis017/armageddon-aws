@@ -119,56 +119,15 @@ resource "aws_lambda_function" "executive_dashboard_agent_lambda" {
   source_code_hash = data.archive_file.executive_dashboard_agent_lambda_zip.output_base64sha256
 }
 # scheduler rule
-# permissions
-resource "aws_iam_role" "eventbridge_scheduler_role" {
-  name = "eventbridge-scheduler-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "scheduler.amazonaws.com"
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy" "scheduler_lambda_policy" {
-  name = "scheduler-lambda-policy"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "lambda:InvokeFunction"
-        ]
-        Resource = aws_lambda_function.executive_dashboard_agent_lambda.arn
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "schedule_role_attachment_lambda" {
-  role       = aws_iam_role.eventbridge_scheduler_role.name
-  policy_arn = aws_iam_policy.scheduler_lambda_policy.arn
-}
-
 # schedule -- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/scheduler_schedule
-resource "aws_scheduler_schedule" "detection_schedule" {
-  count      = 0
-  name       = "run-detection-lambda"
+resource "aws_scheduler_schedule" "executive_dashboard_agent_schedule" {
+  name       = "executive-dashboard-agent-lambda-schedule"
   group_name = "default"
   flexible_time_window {
     mode = "OFF"
   }
 
-  schedule_expression = "cron(0 0 * * ? *)" # run nightly at midnight # "rate(10 minute)"
+  schedule_expression = "cron(0 0 * * ? *)" # run nightly at midnight UTC # "rate(10 minute)"
 
   target {
     arn      = aws_lambda_function.executive_dashboard_agent_lambda.arn

@@ -66,7 +66,7 @@ resource "aws_lambda_function" "waf_threat_correlation_lambda" {
   runtime       = "python3.11"
   handler       = "waf_threat_correlation_agent.lambda_handler" # filename.handler_function_name
   package_type  = "Zip"                                         # defaults to zip
-  timeout       = 300                                           # timeout in seconds
+  timeout       = 600                                           # timeout in seconds
   # default memory size is 128MB
 
   environment {
@@ -77,11 +77,30 @@ resource "aws_lambda_function" "waf_threat_correlation_lambda" {
       WAF_LOG_GROUP              = aws_cloudwatch_log_group.waf_log_group.name
       CORRELATION_WINDOW_MINUTES = 60
       MINIMUM_EVENT_COUNT        = 3
-      MAX_EVENTS                 = 100
+      MAX_EVENTS                 = 500
       EVENTBRIDGE_BUS_NAME       = var.waf_correlation_bus_name
       EVENTBRIDGE_SOURCE         = var.waf_correlation_event_source
     }
   }
   depends_on       = [aws_cloudwatch_log_group.waf_threat_correlation_lambda_logs]
   source_code_hash = data.archive_file.waf_threat_correlation_lambda_zip.output_base64sha256
+}
+
+# scheduler rule
+# schedule -- https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/scheduler_schedule
+resource "aws_scheduler_schedule" "waf_threat_correlation_schedule" {
+  name       = "run-waf-threat-correlation-lambda-schedule"
+  group_name = "default"
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = "rate(60 minute)" # since we don't set start date, the first execution is after deployment
+
+  target {
+    arn      = aws_lambda_function.waf_threat_correlation_lambda.arn
+    role_arn = aws_iam_role.eventbridge_scheduler_role.arn
+
+    # no custom payload
+  }
 }
