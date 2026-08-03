@@ -103,3 +103,8 @@ variable "default_bedrock_model_id" {
 variable "default_bedrock_foundation_model_arn" {
   type = string
 }
+
+variable "soar_critical_alerts_topic_name" {
+  type    = string
+  default = "soar-critical-alerts-topic"
+}

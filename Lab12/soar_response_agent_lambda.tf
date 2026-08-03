@@ -91,6 +91,60 @@ resource "aws_sns_topic_subscription" "soar_response_subscription" {
   endpoint  = var.soar_sns_email_endpoint
 }
 
+## SNS Topic for critical alerts
+resource "aws_sns_topic" "soar_critical_alerts_topic" {
+  name = var.soar_critical_alerts_topic_name
+}
+
+resource "aws_sns_topic_subscription" "soar_critical_alerts_subscription" {
+  topic_arn = aws_sns_topic.soar_critical_alerts_topic.arn
+  protocol  = "email"
+  endpoint  = var.soar_sns_email_endpoint
+}
+
+resource "aws_sns_topic_policy" "soar_critical_alerts_topic_policy" {
+  arn = aws_sns_topic.soar_critical_alerts_topic.arn
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "SNS:Publish"
+        Resource  = aws_sns_topic.soar_critical_alerts_topic.arn
+        # This block strictly restricts the principal to this exact rule
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" = aws_cloudwatch_event_rule.critical_alerts_rule.arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_cloudwatch_event_rule" "critical_alerts_rule" {
+  name           = "critical-alerts-rule"
+  description    = "Publish to SNS on a critical alert finding"
+  event_bus_name = var.waf_correlation_bus_name
+  event_pattern = jsonencode({
+    "source" : [
+      var.waf_correlation_event_source
+    ],
+    "detail-type" : [
+      "Critical Finding"
+    ]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "critical_alerts_target" {
+  rule           = aws_cloudwatch_event_rule.critical_alerts_rule.name
+  target_id      = "critical-alerts-sns"
+  arn            = aws_sns_topic.soar_critical_alerts_topic.arn
+  event_bus_name = var.waf_correlation_bus_name
+}
+
+
 ## Lambda
 resource "aws_cloudwatch_log_group" "soar_response_agent_lambda_logs" {
   name              = "/aws/lambda/${local.soar_response_agent_function_name}"
